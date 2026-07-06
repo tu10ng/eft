@@ -17,14 +17,18 @@
   let syncTimeout = null;
 
   function initSupabase() {
-    if (typeof supabase === 'undefined') {
-      console.warn('[Sync] Supabase SDK not loaded yet, retrying...');
-      setTimeout(initSupabase, 500);
-      return;
+    /* 先显示登录 UI */
+    var savedEmail = localStorage.getItem("eft_session_email");
+    showLoginUI(savedEmail || "");
+    /* SDK 就绪后初始化 */
+    if (typeof supabase !== "undefined" && supabase.createClient) {
+      supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      checkSession();
+      console.log("[Sync] Supabase initialized");
+    } else {
+      setTimeout(initSupabase, 2000);
     }
-    supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    checkSession();
-    console.log('[Sync] Supabase initialized');
+  }
   }
 
   // ---------- 认证 ----------

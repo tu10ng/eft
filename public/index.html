@@ -12326,14 +12326,9 @@
 <script type="text/javascript" defer="defer" src="./questitems/quest_items_table.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const currentMode = localStorage.getItem('currentMode');
-        if (currentMode === 'regular') {
-            window.location.href = 'web_259.html';
-        } else if (currentMode === 'pve') {
-            console.log('当前为PVP模式，保持页面不变');
-        } else {
-            console.log('未设置有效的currentMode，保持页面不变');
-        }
+        // 固定 PvE 模式，不跳转
+        localStorage.setItem('currentMode', 'pve');
+        console.log('模式: PvE');
     });
 </script>
 <br />

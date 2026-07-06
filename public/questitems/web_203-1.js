@@ -12,12 +12,12 @@ if (buttonStatusString) {
             if (buttonStatus.hasOwnProperty(key)) {
                 if (buttonStatus[key] === true) {
                     localStorage.setItem(`${secretKeyPrefix}-${key}`, String(valueIfTrue));
-                    console.log(`秘钥 "${secretKeyPrefix}-${key}" 已设置为 ${valueIfTrue} 并存储到 localStorage 中。`);
+                    // console.log(`秘钥 "${secretKeyPrefix}-${key}" 已设置为 ${valueIfTrue} 并存储到 localStorage 中。`);
                 } else {
-                    console.log(`buttonStatus 中 "${key}" 的值不是 true 或 false，未存储秘钥。`);
+                    // console.log(`buttonStatus 中 "${key}" 的值不是 true 或 false，未存储秘钥。`);
                 }
             } else {
-                console.log(`buttonStatus 中不存在 "${key}" 键，未存储秘钥。`);
+                // console.log(`buttonStatus 中不存在 "${key}" 键，未存储秘钥。`);
             }
         }
 
@@ -405,5 +405,5 @@ if (buttonStatusString) {
     }
 } else {
     // 如果 buttonStatus 不存在，可以选择执行其他操作或忽略
-    console.log('buttonStatus 不存在于 localStorage 中，未存储秘钥。');
+    // console.log('buttonStatus 不存在于 localStorage 中，未存储秘钥。');
 }

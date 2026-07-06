@@ -17,12 +17,12 @@
   let syncTimeout = null;
 
   function initSupabase() {
-    if (typeof supabaseCreateClient === 'undefined') {
+    if (typeof supabase === 'undefined') {
       console.warn('[Sync] Supabase SDK not loaded yet, retrying...');
       setTimeout(initSupabase, 500);
       return;
     }
-    supabase = supabaseCreateClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     checkSession();
     console.log('[Sync] Supabase initialized');
   }

@@ -17,18 +17,17 @@
   let syncTimeout = null;
 
   function initSupabase() {
-    /* 先显示登录 UI */
-    var savedEmail = localStorage.getItem("eft_session_email");
-    showLoginUI(savedEmail || "");
-    /* SDK 就绪后初始化 */
-    if (typeof supabase !== "undefined" && supabase.createClient) {
-      supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    /* SDK 就绪后初始化（检查全局 window.supabase，非局部变量） */
+    if (typeof window.supabase !== "undefined" && window.supabase.createClient) {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       checkSession();
       console.log("[Sync] Supabase initialized");
     } else {
+      // SDK 还没加载好，显示等待状态，2秒后重试
+      var area = document.querySelector('.eft-sync-user-area');
+      if (area) area.innerHTML = '<span style="color:#aaa;">连接服务器中...</span>';
       setTimeout(initSupabase, 2000);
     }
-  }
   }
 
   // ---------- 认证 ----------
@@ -51,6 +50,10 @@
   }
 
   async function login(email, password, isRegister) {
+    if (!supabase) {
+      alert('正在连接服务器，请稍后再试...');
+      return;
+    }
     try {
       let result;
       if (isRegister) {

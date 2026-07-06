@@ -7,7 +7,7 @@
   'use strict';
 
   // ---------- 配置（部署时替换为你的 Supabase 信息）----------
-  const SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co';
+  const SUPABASE_URL = 'https://ywzdjijjeqeyevhrudrf.supabase.co';
   const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
 
   // ---------- 初始化 ----------

@@ -8,7 +8,7 @@
 
   // ---------- 配置（部署时替换为你的 Supabase 信息）----------
   const SUPABASE_URL = 'https://ywzdjijjeqeyevhrudrf.supabase.co';
-  const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3emRqaWpqZXFleWV2aHJ1ZHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNDQzOTYsImV4cCI6MjA5ODkyMDM5Nn0.6YbjRFX0iLhVTk8GFPI3_RK44Bu_A6J5Zg-DQIPQpvk';
 
   // ---------- 初始化 ----------
   let supabase = null;

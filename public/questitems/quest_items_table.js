@@ -1,0 +1,2 @@
+const searchInput=document.getElementById('quests-items-search-input');const container=document.querySelector('.quest-items__items-list');const elements=container.querySelectorAll('.quest-items__items-list__item');searchInput.addEventListener('keyup',function(){let found=false;let toFilter=searchInput.value.toLowerCase();for(let i=0;i<elements.length;i++){if(elements[i].dataset.name.toLowerCase().indexOf(toFilter)>-1){found=true;}
+if(found){elements[i].style.display='';found=false;}else{elements[i].style.display='none';}}});

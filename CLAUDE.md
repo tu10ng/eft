@@ -37,7 +37,7 @@ This is **not** a pure React SPA. The original EFT quest tree is a standalone HT
 
 - **`src/main.tsx`** creates a React root at the bottom of `<body>` — it does not take over the full page.
 - **`src/App.tsx`** renders three things into this root:
-  - `SyncPanel` — login/register, team CRUD, invite codes, filter bar (fixed-position panel at bottom-right)
+  - `SyncPanel` — nickname-only login (no email/password), team CRUD, invite codes, filter bar (fixed-position panel at bottom-right)
   - `QuestPillBridge` — scans the DOM for `.myButton` elements (quest cards from the original page), hides them, and renders React `DualPill` components next to them via **React Portals**
   - `TeamDashboard` — comparison modal
 - The public directory contains the original page assets: `public/global.js`, `public/tree.html`, `public/web_205.html`, `public/xiaoguo.js`, etc. These run independently of React.
@@ -52,6 +52,9 @@ Original DOM (.myButton)  ←→  QuestPillBridge (portals)  ←→  DualPill
                                                                ↓
                                                           supabase client
                                                     (PostgREST + Realtime WS)
+
+Auth flow (no email/password from user):
+  SyncPanel (click nickname) → POST to Edge Function → gets session → setSession() → authenticated
 ```
 
 ### State management split
@@ -89,6 +92,22 @@ Project ref: `ywzdjijjeqeyevhrudrf`. Supabase credentials are hardcoded in `src/
 | `teams` | Teams with `invite_code` |
 | `team_members` | Junction table, composite PK (`team_id, user_id`) |
 | `quest_progress` | One row per user, `quest_data` is JSONB |
+
+### Auth: nickname-only login (no email / no password)
+
+Users do **not** see or type email/password anywhere. The login UI shows two nickname buttons ("玩家1", "玩家2"). Clicking a nickname calls a Supabase Edge Function (`nickname-auth`) that:
+1. Maps nickname → internal email (e.g. `p1@eft.internal`)
+2. Ensures the Supabase Auth user exists (lazy-create with `admin.createUser()` if first login)
+3. Signs in with a server-side-only password and returns the session tokens
+4. Client calls `supabase.auth.setSession()` with the returned tokens
+
+Key points:
+- The internal password (`eft-nickname-auth-9251b3f8`) exists ONLY in the Edge Function source code (server-side, never reaches the browser)
+- Internal emails (`p1@eft.internal`, `p2@eft.internal`) are hidden from users — they see only nicknames
+- `EftUser` type stores `{ id, displayName }` — no `email` field
+- Edge Function: `supabase/functions/nickname-auth/index.ts`, deployed with `verify_jwt: false`
+- URL: `https://ywzdjijjeqeyevhrudrf.supabase.co/functions/v1/nickname-auth`
+- On auth state change, `useAuth` queries `profiles.display_name` and sets `EftUser.displayName`
 
 ### RLS model
 

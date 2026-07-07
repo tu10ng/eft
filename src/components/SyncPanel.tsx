@@ -12,43 +12,37 @@ import { SyncIndicator } from './SyncIndicator'
 import { FilterBar } from './FilterBar'
 
 export function SyncPanel() {
-  const { user, login, logout } = useAuth()
+  const { user, loginByNickname, logout } = useAuth()
   const teamId = useUIStore((s) => s.teamId)
   const setTeamId = useUIStore((s) => s.setTeamId)
   const toggleDashboard = useUIStore((s) => s.toggleDashboard)
   const { data: teamInfo, refetch: refetchTeamInfo } = useTeamInfo()
   const queryClient = useQueryClient()
 
-  // Login form state
-  const [email, setEmail] = useState(localStorage.getItem('eft_session_email') ?? '')
-  const [password, setPassword] = useState('')
+  // Login state — 记住上次选的昵称
+  const [loadingNickname, setLoadingNickname] = useState<string | null>(null)
   const [teamName, setTeamName] = useState('')
   const [inviteCode, setInviteCode] = useState('')
 
-  const handleLogin = useCallback(
-    async (isRegister: boolean) => {
-      if (!email.trim() || !password) {
-        toast.error('请输入邮箱和密码')
-        return
-      }
+  const handleNicknameLogin = useCallback(
+    async (nickname: string) => {
+      setLoadingNickname(nickname)
       try {
-        const result = await login(email.trim(), password, isRegister)
-        if (result.needsConfirmation) {
-          toast.success('注册成功！请检查邮箱验证链接，然后登录。')
-        } else {
-          localStorage.setItem('eft_session_email', email.trim())
-          toast.success('登录成功')
-        }
+        await loginByNickname(nickname)
+        localStorage.setItem('eft_session_nickname', nickname)
+        toast.success(`欢迎，${nickname}`)
       } catch (err: unknown) {
-        toast.error(`操作失败: ${err instanceof Error ? err.message : '未知错误'}`)
+        toast.error(`登录失败: ${err instanceof Error ? err.message : '未知错误'}`)
+      } finally {
+        setLoadingNickname(null)
       }
     },
-    [email, password, login]
+    [loginByNickname]
   )
 
   const handleLogout = useCallback(async () => {
     await logout()
-    localStorage.removeItem('eft_session_email')
+    localStorage.removeItem('eft_session_nickname')
     toast.success('已退出登录')
   }, [logout])
 
@@ -110,7 +104,7 @@ export function SyncPanel() {
         <span className="eft-sync-user-area" style={{ fontSize: 12 }}>
           {user ? (
             <>
-              <span style={{ color: '#7ae378' }}>✓ {user.email}</span>
+              <span style={{ color: '#7ae378' }}>✓ {user.displayName}</span>
               <button onClick={handleLogout} style={{ marginLeft: 10, padding: '2px 8px' }}>退出</button>
             </>
           ) : null}
@@ -119,19 +113,32 @@ export function SyncPanel() {
       </div>
 
       {!user ? (
-        <div style={{ fontSize: 12 }}>
-          <input
-            type="email" placeholder="邮箱" value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ width: 120, padding: '2px 5px', display: 'block', marginBottom: 4 }}
-          />
-          <input
-            type="password" placeholder="密码" value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ width: 80, padding: '2px 5px', display: 'block', marginBottom: 4 }}
-          />
-          <button onClick={() => handleLogin(false)} style={{ padding: '2px 8px', marginRight: 4 }}>登录</button>
-          <button onClick={() => handleLogin(true)} style={{ padding: '2px 8px' }}>注册</button>
+        <div style={{ fontSize: 12, textAlign: 'center' }}>
+          <div style={{ marginBottom: 8, color: '#aaa' }}>选择你的身份：</div>
+          {(['玩家1', '玩家2'] as const).map((nickname) => (
+            <button
+              key={nickname}
+              onClick={() => handleNicknameLogin(nickname)}
+              disabled={loadingNickname !== null}
+              style={{
+                display: 'block',
+                width: '100%',
+                padding: '8px 12px',
+                marginBottom: 6,
+                background: loadingNickname === nickname
+                  ? '#555'
+                  : 'linear-gradient(135deg, #16213e 0%, #1a1a2e 100%)',
+                color: loadingNickname === nickname ? '#999' : '#409EFF',
+                border: '1px solid #409EFF',
+                borderRadius: 6,
+                cursor: loadingNickname ? 'not-allowed' : 'pointer',
+                fontSize: 14,
+                transition: 'all 0.2s',
+              }}
+            >
+              {loadingNickname === nickname ? '登录中...' : `👤 ${nickname}`}
+            </button>
+          ))}
         </div>
       ) : teamId ? (
         <div className="eft-sync-team-area" style={{ fontSize: 12 }}>

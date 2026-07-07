@@ -44,7 +44,7 @@ export type RealtimeConnectionStatus = 'connected' | 'disconnected' | 'timeout' 
 /** Supabase Auth User (subset we use) */
 export interface EftUser {
   id: string
-  email: string
+  displayName: string
 }
 
 /** Quest toggle mutation input */

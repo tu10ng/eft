@@ -15,13 +15,26 @@ const NICKNAME_CONFIG: Record<string, string> = {
   '玩家2': 'p2@eft.internal',
 }
 
+// CORS 头
+const CORS_HEADERS = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), { status, headers: CORS_HEADERS })
+}
+
 Deno.serve(async (req: Request) => {
-  // Only allow POST
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS_HEADERS })
+  }
+
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return jsonResponse({ error: 'Method not allowed' }, 405)
   }
 
   let nickname: string
@@ -29,18 +42,12 @@ Deno.serve(async (req: Request) => {
     const body = await req.json()
     nickname = body.nickname
   } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return jsonResponse({ error: 'Invalid JSON body' }, 400)
   }
 
   const email = NICKNAME_CONFIG[nickname]
   if (!email) {
-    return new Response(JSON.stringify({ error: '未知昵称，可选: 玩家1, 玩家2' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return jsonResponse({ error: '未知昵称，可选: 玩家1, 玩家2' }, 400)
   }
 
   try {
@@ -74,15 +81,9 @@ Deno.serve(async (req: Request) => {
     })
     if (signInError) throw signInError
 
-    return new Response(JSON.stringify({ session: signInData.session }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return jsonResponse({ session: signInData.session })
   } catch (err) {
     const message = err instanceof Error ? err.message : '服务器内部错误'
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return jsonResponse({ error: message }, 500)
   }
 })

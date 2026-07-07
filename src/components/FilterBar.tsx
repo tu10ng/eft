@@ -15,9 +15,6 @@ const FILTERS: { mode: FilterMode; label: string }[] = [
 export function FilterBar() {
   const currentFilter = useUIStore((s) => s.currentFilter)
   const setFilter = useUIStore((s) => s.setFilter)
-  const hasTeammate = useUIStore((s) => Boolean(s.teamId))
-
-  if (!hasTeammate) return null
 
   return (
     <div className="eft-filter-bar" id="eft-filter-bar">

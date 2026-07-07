@@ -8,7 +8,7 @@ import { useUIStore } from '../stores/uiStore'
 import type { RealtimeConnectionStatus } from '../types'
 
 export function useRealtime() {
-  const teamId = useUIStore((s) => s.teamId)
+  const teammateId = useUIStore((s) => s.teammateId)
   const user = useUIStore((s) => s.user)
   const setSyncStatus = useUIStore((s) => s.setSyncStatus)
   const setRealtimeStatus = useUIStore((s) => s.setRealtimeStatus)
@@ -22,7 +22,7 @@ export function useRealtime() {
   }, [realtimeStatus, setRealtimeStatus])
 
   useEffect(() => {
-    if (!teamId || !user) {
+    if (!teammateId || !user) {
       setLocalRealtimeStatus('disconnected')
       return
     }
@@ -46,7 +46,7 @@ export function useRealtime() {
 
           // Incrementally update the teammate's cached progress.
           // We invalidate the query; the setQueryData provides instant feedback.
-          queryClient.invalidateQueries({ queryKey: ['teamProgress', teamId] })
+          queryClient.invalidateQueries({ queryKey: ['teamProgress', teammateId] })
         }
       )
       .subscribe((status) => {
@@ -75,7 +75,7 @@ export function useRealtime() {
         // Channel may already be removed
       })
     }
-  }, [teamId, user, queryClient, setSyncStatus])
+  }, [teammateId, user, queryClient, setSyncStatus])
 
   return { realtimeStatus }
 }

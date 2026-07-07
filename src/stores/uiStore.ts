@@ -10,9 +10,9 @@ interface UIState {
   user: EftUser | null
   setUser: (user: EftUser | null) => void
 
-  // Team
-  teamId: string | null
-  setTeamId: (teamId: string | null) => void
+  // Teammate (auto-resolved from nickname mapping)
+  teammateId: string | null
+  setTeammateId: (teammateId: string | null) => void
 
   // Filter
   currentFilter: FilterMode
@@ -35,8 +35,8 @@ export const useUIStore = create<UIState>((set) => ({
   user: null,
   setUser: (user) => set({ user }),
 
-  teamId: null,
-  setTeamId: (teamId) => set({ teamId }),
+  teammateId: null,
+  setTeammateId: (teammateId) => set({ teammateId }),
 
   currentFilter: 'all',
   setFilter: (currentFilter) => set({ currentFilter }),

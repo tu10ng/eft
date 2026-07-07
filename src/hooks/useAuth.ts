@@ -1,5 +1,6 @@
 // ============================================
 // useAuth — 无邮箱无密码的昵称登录
+// 登录时自动解析队友 UUID（玩家1↔玩家2）
 // ============================================
 import { useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
@@ -9,10 +10,31 @@ import { queryClient } from '../lib/queryClient'
 const EDGE_FUNCTION_URL =
   'https://ywzdjijjeqeyevhrudrf.supabase.co/functions/v1/nickname-auth'
 
+/** 昵称映射：当前用户 → 队友昵称 */
+const TEAMMATE_MAP: Record<string, string> = {
+  '玩家1': '玩家2',
+  '玩家2': '玩家1',
+}
+
+/** 根据当前用户昵称，查询队友的 UUID */
+async function resolveTeammateId(displayName: string): Promise<string | null> {
+  const teammateNickname = TEAMMATE_MAP[displayName]
+  if (!teammateNickname) return null
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('display_name', teammateNickname)
+    .maybeSingle()
+
+  if (error || !data) return null
+  return data.id as string
+}
+
 export function useAuth() {
   const user = useUIStore((s) => s.user)
   const setUser = useUIStore((s) => s.setUser)
-  const setTeamId = useUIStore((s) => s.setTeamId)
+  const setTeammateId = useUIStore((s) => s.setTeammateId)
   const setSyncStatus = useUIStore((s) => s.setSyncStatus)
 
   // 从 profiles 表获取 display_name
@@ -39,6 +61,8 @@ export function useAuth() {
       if (session?.user) {
         const displayName = await fetchDisplayName(session.user.id)
         setUser({ id: session.user.id, displayName })
+        const teammateId = await resolveTeammateId(displayName)
+        setTeammateId(teammateId)
         setSyncStatus('online')
       }
     })
@@ -50,17 +74,19 @@ export function useAuth() {
       if (session?.user) {
         const displayName = await fetchDisplayName(session.user.id)
         setUser({ id: session.user.id, displayName })
+        const teammateId = await resolveTeammateId(displayName)
+        setTeammateId(teammateId)
         setSyncStatus('online')
       } else {
         setUser(null)
-        setTeamId(null)
+        setTeammateId(null)
         setSyncStatus('offline')
         queryClient.clear()
       }
     })
 
     return () => subscription.unsubscribe()
-  }, [setUser, setTeamId, setSyncStatus, fetchDisplayName])
+  }, [setUser, setTeammateId, setSyncStatus, fetchDisplayName])
 
   // 通过昵称登录（调用 Edge Function）
   const loginByNickname = useCallback(async (nickname: string) => {
@@ -90,10 +116,10 @@ export function useAuth() {
   const logout = useCallback(async () => {
     await supabase.auth.signOut()
     setUser(null)
-    setTeamId(null)
+    setTeammateId(null)
     queryClient.clear()
     setSyncStatus('offline')
-  }, [setUser, setTeamId, setSyncStatus])
+  }, [setUser, setTeammateId, setSyncStatus])
 
   return { user, loginByNickname, logout }
 }

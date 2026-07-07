@@ -54,18 +54,3 @@ export interface QuestToggle {
   timestamp: number
 }
 
-/** Team info from DB */
-export interface TeamInfo {
-  id: string
-  name: string
-  invite_code: string
-}
-
-/** Team member with profile */
-export interface TeamMember {
-  user_id: string
-  role: string
-  profiles?: {
-    display_name: string
-  }
-}

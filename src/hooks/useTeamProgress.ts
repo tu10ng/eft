@@ -1,8 +1,7 @@
 // ============================================
-// useTeamProgress — fetch teammate quest data
-// Also provides team CRUD helpers
+// useTeamProgress — fetch teammate quest progress
+// 队友由昵称映射自动解析，无需小队机制
 // ============================================
-import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useUIStore } from '../stores/uiStore'
@@ -10,178 +9,45 @@ import { normalizeQuestData } from './useMyProgress'
 import type { TeamProgressMap } from '../types'
 
 /**
- * Hook: fetch my team info (teamId, invite code, members)
- */
-export function useTeamInfo() {
-  const user = useUIStore((s) => s.user)
-  const setTeamId = useUIStore((s) => s.setTeamId)
-
-  const query = useQuery({
-    queryKey: ['teamInfo', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('team_members')
-        .select('team_id, teams(name, invite_code)')
-        .eq('user_id', user!.id)
-        .maybeSingle()
-
-      if (error) throw error
-
-      return {
-        teamId: (data?.team_id as string) ?? null,
-        teamName: (data?.teams as unknown as { name?: string })?.name ?? null,
-        inviteCode: (data?.teams as unknown as { invite_code?: string })?.invite_code ?? null,
-      }
-    },
-    enabled: !!user,
-    staleTime: 60_000,
-    retry: 2,
-  })
-
-  // Side effect: sync teamId to Zustand store — done in useEffect, NOT in queryFn
-  useEffect(() => {
-    const teamId = query.data?.teamId ?? null
-    setTeamId(teamId)
-  }, [query.data?.teamId, setTeamId])
-
-  return query
-}
-
-/**
- * Hook: fetch teammates' quest progress
+ * Hook: fetch teammate's quest progress
+ * 直接用 teammateId（登录时自动解析），不再通过 team_members 表
  */
 export function useTeamProgress(realtimeStatus: string) {
-  const teamId = useUIStore((s) => s.teamId)
+  const teammateId = useUIStore((s) => s.teammateId)
   const user = useUIStore((s) => s.user)
 
   return useQuery({
-    queryKey: ['teamProgress', teamId],
+    queryKey: ['teamProgress', teammateId],
     queryFn: async (): Promise<TeamProgressMap> => {
-      if (!teamId) return {}
+      if (!teammateId || !user) return {}
 
-      // Fetch team members
-      const { data: members } = await supabase
-        .from('team_members')
-        .select('user_id')
-        .eq('team_id', teamId)
-
-      const userIds = (members ?? [])
-        .map((m) => m.user_id)
-        .filter((uid) => uid !== user?.id)
-
-      if (userIds.length === 0) return {}
-
-      // Fetch progress for all teammates
-      const { data: progress } = await supabase
+      // 直接查队友的 quest_progress
+      const { data: progressRow } = await supabase
         .from('quest_progress')
-        .select('user_id, quest_data')
-        .in('user_id', userIds)
+        .select('quest_data')
+        .eq('user_id', teammateId)
+        .maybeSingle()
 
-      // Fetch profile names
-      const { data: profiles } = await supabase
+      // 查队友的 display_name
+      const { data: profile } = await supabase
         .from('profiles')
-        .select('id, display_name')
-        .in('id', userIds)
+        .select('display_name')
+        .eq('id', teammateId)
+        .single()
 
-      const nameMap: Record<string, string> = {}
-      profiles?.forEach((p) => {
-        nameMap[p.id] = p.display_name
-      })
+      if (!progressRow) return {}
 
-      const result: TeamProgressMap = {}
-      progress?.forEach((p) => {
-        result[p.user_id] = {
-          name: nameMap[p.user_id] ?? 'Unknown',
-          data: normalizeQuestData((p.quest_data as Record<string, unknown>) ?? {}),
-        }
-      })
-
-      return result
+      return {
+        [teammateId]: {
+          name: profile?.display_name ?? '好友',
+          data: normalizeQuestData((progressRow.quest_data as Record<string, unknown>) ?? {}),
+        },
+      }
     },
-    enabled: !!teamId && !!user,
+    enabled: !!teammateId && !!user,
     staleTime: 15_000,
     // Fallback polling when realtime is disconnected
     refetchInterval: realtimeStatus === 'disconnected' ? 10_000 : false,
     retry: 2,
   })
-}
-
-/**
- * Create a new team
- */
-export async function createTeam(name: string, userId: string): Promise<{ teamId: string; code: string }> {
-  const code = generateInviteCode()
-
-  const { data: team, error: teamError } = await supabase
-    .from('teams')
-    .insert({ name, invite_code: code, created_by: userId })
-    .select()
-    .single()
-
-  if (teamError) throw teamError
-
-  const { error: memberError } = await supabase.from('team_members').insert({
-    team_id: team.id,
-    user_id: userId,
-    role: 'owner',
-  })
-
-  if (memberError) throw memberError
-
-  return { teamId: team.id, code }
-}
-
-/**
- * Join an existing team by invite code
- */
-export async function joinTeam(code: string, userId: string): Promise<string> {
-  const { data: team, error } = await supabase
-    .from('teams')
-    .select('id, name')
-    .eq('invite_code', code.toUpperCase().trim())
-    .single()
-
-  if (error || !team) throw new Error('未找到该小队，请检查邀请码')
-
-  // Check if already a member
-  const { data: existing } = await supabase
-    .from('team_members')
-    .select('*')
-    .eq('team_id', team.id)
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  if (!existing) {
-    const { error: joinError } = await supabase.from('team_members').insert({
-      team_id: team.id,
-      user_id: userId,
-      role: 'member',
-    })
-    if (joinError) throw joinError
-  }
-
-  return team.id
-}
-
-/**
- * Leave the current team
- */
-export async function leaveTeam(teamId: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('team_members')
-    .delete()
-    .eq('team_id', teamId)
-    .eq('user_id', userId)
-
-  if (error) throw error
-}
-
-function generateInviteCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  let code = ''
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)]
-    if (i === 2) code += '-'
-  }
-  return code
 }

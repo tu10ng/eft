@@ -21,7 +21,7 @@ npm run preview   # Preview production build locally
 
 ## Project overview
 
-Escape from Tarkov (EFT) quest progress tracker. The app embeds a quest tree page from eftarkov.com (~745KB single HTML file) and adds a React overlay for Supabase-based cloud sync, team management, and teammate progress comparison.
+Escape from Tarkov (EFT) quest progress tracker. The app embeds a quest tree page from eftarkov.com (~745KB single HTML file) and adds a React overlay for Supabase-based cloud sync and dual-player progress comparison. Exactly 2 users (玩家1, 玩家2) — teammate pairing is automatic via nickname mapping, no team/squad creation needed.
 
 ## Deployment
 
@@ -37,7 +37,7 @@ This is **not** a pure React SPA. The original EFT quest tree is a standalone HT
 
 - **`src/main.tsx`** creates a React root at the bottom of `<body>` — it does not take over the full page.
 - **`src/App.tsx`** renders three things into this root:
-  - `SyncPanel` — nickname-only login (no email/password), team CRUD, invite codes, filter bar (fixed-position panel at bottom-right)
+  - `SyncPanel` — nickname-only login (no email/password), filter bar, dashboard toggle (fixed-position panel at bottom-right)
   - `QuestPillBridge` — scans the DOM for `.myButton` elements (quest cards from the original page), hides them, and renders React `DualPill` components next to them via **React Portals**
   - `TeamDashboard` — comparison modal
 - The public directory contains the original page assets: `public/global.js`, `public/tree.html`, `public/web_205.html`, `public/xiaoguo.js`, etc. These run independently of React.
@@ -59,8 +59,8 @@ Auth flow (no email/password from user):
 
 ### State management split
 
-- **Server state** → **TanStack Query** (`@tanstack/react-query`): quest progress (`useMyProgress`, `useToggleQuest`), team info/progress (`useTeamInfo`, `useTeamProgress`). Persisted to IndexedDB for offline support via `idb-keyval`. Stale time: 30s for my progress, 15s for team progress.
-- **UI state** → **Zustand** (`src/stores/uiStore.ts`): current user, teamId, filter mode, dashboard open/close, sync status indicator.
+- **Server state** → **TanStack Query** (`@tanstack/react-query`): quest progress (`useMyProgress`, `useToggleQuest`), teammate progress (`useTeamProgress`). Persisted to IndexedDB for offline support via `idb-keyval`. Stale time: 30s for my progress, 15s for teammate progress.
+- **UI state** → **Zustand** (`src/stores/uiStore.ts`): current user, teammateId (auto-resolved at login), filter mode, dashboard open/close, sync status indicator.
 
 ### Quest data format
 
@@ -89,8 +89,8 @@ Project ref: `ywzdjijjeqeyevhrudrf`. Supabase credentials are hardcoded in `src/
 | Table | Purpose |
 |---|---|
 | `profiles` | Auto-created on signup via trigger `handle_new_user()` |
-| `teams` | Teams with `invite_code` |
-| `team_members` | Junction table, composite PK (`team_id, user_id`) |
+| `teams` | Deprecated — no longer used by frontend (kept for data retention) |
+| `team_members` | Deprecated — no longer used by frontend (kept for data retention) |
 | `quest_progress` | One row per user, `quest_data` is JSONB |
 
 ### Auth: nickname-only login (no email / no password)
@@ -107,13 +107,22 @@ Key points:
 - `EftUser` type stores `{ id, displayName }` — no `email` field
 - Edge Function: `supabase/functions/nickname-auth/index.ts`, deployed with `verify_jwt: false`
 - URL: `https://ywzdjijjeqeyevhrudrf.supabase.co/functions/v1/nickname-auth`
-- On auth state change, `useAuth` queries `profiles.display_name` and sets `EftUser.displayName`
+- On auth state change, `useAuth` queries `profiles.display_name`, sets `EftUser.displayName`, then auto-resolves the teammate's UUID via nickname mapping (玩家1↔玩家2) and stores it as `teammateId` in Zustand
+
+### Teammate resolution (no team/squad needed)
+
+Since the system has exactly 2 users, teammate pairing is automatic:
+1. On login, `useAuth` reads `user.displayName` (玩家1 or 玩家2)
+2. Maps to the other nickname via hardcoded dictionary: `{ '玩家1': '玩家2', '玩家2': '玩家1' }`
+3. Queries `profiles` table: `SELECT id WHERE display_name = 对方昵称`
+4. Stores result as `teammateId` in Zustand
+5. `useTeamProgress` uses `teammateId` directly to fetch the other player's quest data
+6. If the other player hasn't logged in yet (no profile row), `teammateId` stays null and the friend pill shows "暂无好友数据"
 
 ### RLS model
 
-- `quest_progress`: users can SELECT their own + teammates' rows; only INSERT/UPDATE their own
-- `teams`: members can SELECT their team; any authenticated user can INSERT
-- `team_members`: members can SELECT their team roster; INSERT allowed for team owner OR self-join
+- `quest_progress`: any authenticated user can SELECT (migration 003); only INSERT/UPDATE their own
+- `teams` / `team_members`: policies still exist but frontend no longer accesses these tables
 
 ### Realtime
 
@@ -127,14 +136,6 @@ Quest changes broadcast via `supabase_realtime` publication on `quest_progress`.
 - **No routing**: This is a single-page app with a modal overlay for the dashboard.
 
 ## Architecture decisions & gotchas
-
-### queryFn must be pure
-TanStack Query's `queryFn` must be a **pure function** — no side effects like setting Zustand state. `useTeamInfo` previously called `setTeamId()` inside `queryFn`, which is wrong because:
-- React StrictMode double-invokes queryFn, causing duplicate side effects
-- Query retries would re-execute the side effect
-- Breaks the separation between data fetching and state management
-
-**Fix**: Use `useEffect` to sync `query.data.teamId` → Zustand `setTeamId`. The `useEffect` runs only when the query result actually changes, not on every retry/StrictMode invocation.
 
 ### SyncStatus has two independent sources
 `useSyncStatus` (browser online/offline) and `useRealtime` (WebSocket connection) both write to the same `syncStatus` Zustand field. The coordination rule:

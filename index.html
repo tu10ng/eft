@@ -113,7 +113,7 @@
 	<script language="javascript" type="text/javascript" src="./template/tarkov/images/dasha.js"></script>
 	<script language="javascript" type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script language="javascript" type="text/javascript" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.min.js"></script>
-<script language="javascript" type="text/javascript" src="./sync.js"></script>
+<!-- [v3] old sync.js removed, replaced by React+TanStack Query -->
 	<link rel="stylesheet" type="text/css" href="./template/tarkov/images/jquery.fancybox.min.css" />
 	<link rel="stylesheet" type="text/css" href="./template/tarkov/images/style.css" media="all" id="webSkin" />
 <!--	<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2207965401540095" crossorigin="anonymous"></script>--> 
@@ -595,6 +595,96 @@
             stroke: #00b285;
             stroke-width: 6;
         }
+
+	/* ====== EFT 双人进度同步样式 ====== */
+	.eft-dual-bar {
+	    display: flex;
+	    gap: 4px;
+	    margin-top: 6px;
+	}
+	.eft-pill {
+	    flex: 1;
+	    padding: 5px 8px;
+	    border: none;
+	    border-radius: 4px;
+	    font-size: 12px;
+	    font-weight: bold;
+	    cursor: pointer;
+	    color: #fff;
+	    text-align: center;
+	    transition: all 0.2s ease;
+	    min-width: 0;
+	}
+	.eft-pill:disabled {
+	    cursor: default;
+	    opacity: 0.85;
+	}
+	.eft-pill-me:hover:not(:disabled) {
+	    filter: brightness(1.2);
+	    transform: scale(1.03);
+	}
+	.eft-done {
+	    background: #4CAF50;
+	    box-shadow: 0 0 6px rgba(76,175,80,0.5);
+	}
+	.eft-undone {
+	    background: #c0392b;
+	}
+	.eft-unknown {
+	    background: #555;
+	    color: #999;
+	}
+	.eft-card-both-done {
+	    box-shadow: 0 0 0 2px #4CAF50, 0 0 12px rgba(76,175,80,0.4) !important;
+	}
+	.eft-card-me-only {
+	    box-shadow: 0 0 0 2px #FFC107, 0 0 12px rgba(255,193,7,0.4) !important;
+	}
+	.eft-card-friend-only {
+	    box-shadow: 0 0 0 2px #2196F3, 0 0 12px rgba(33,150,243,0.4) !important;
+	}
+	.eft-filter-bar {
+	    display: flex;
+	    flex-wrap: wrap;
+	    gap: 3px;
+	    margin-top: 6px;
+	    padding-top: 6px;
+	    border-top: 1px solid rgba(255,255,255,0.1);
+	    align-items: center;
+	}
+	.eft-filter-btn {
+	    padding: 2px 7px;
+	    font-size: 10px;
+	    background: rgba(255,255,255,0.1);
+	    color: #aaa;
+	    border: 1px solid rgba(255,255,255,0.2);
+	    border-radius: 3px;
+	    cursor: pointer;
+	    transition: all 0.15s;
+	    white-space: nowrap;
+	}
+	.eft-filter-btn:hover {
+	    background: rgba(255,255,255,0.2);
+	    color: #fff;
+	}
+	.eft-filter-active {
+	    background: #409EFF !important;
+	    color: #fff !important;
+	    border-color: #409EFF !important;
+	}
+	#eft-filter-count {
+	    font-size: 10px;
+	    color: #777;
+	    margin-left: 6px;
+	    white-space: nowrap;
+	}
+	#eft-team-stats {
+	    font-size: 12px;
+	    line-height: 1.6;
+	    margin-top: 6px;
+	    padding-top: 6px;
+	    border-top: 1px solid rgba(255,255,255,0.1);
+	}
 </style>
 <div style="position:fixed;left:129px;transform:translateX(-50%);z-index:1000;background:var(--background);padding:10px;border:1px solid var(--classC);border-radius:4px;bottom:236px;">
 	<input type="text" id="searchInput" placeholder="输入任务名称搜索..." style="width:113px;padding:8px;" /> <button id="searchButton" style="padding:8px 15px;margin-left:5px;background:#409EFF;color:white;border:none;border-radius:4px;cursor:pointer;">搜索</button> 
@@ -17396,6 +17486,7 @@ PVE：在迷宫内消灭任意目标 36 个
 <script type="text/javascript" defer="defer" src="https://www.eftarkov.com/questitems/web_205.js"></script>
 <script type="text/javascript" defer="defer" src="https://www.eftarkov.com/questitems/web_203-1.js"></script>
 <script type="text/javascript" defer="defer" src="https://www.eftarkov.com/questitems/web_202-2-pve.js"></script>
+<!-- [v3] old dual-renderer.js removed, replaced by React components -->
 
 
 
@@ -17404,15 +17495,9 @@ PVE：在迷宫内消灭任意目标 36 个
 			</script>
 			
 
-	<!-- ====== 好友同步面板 ====== -->
-	<div class="eft-sync-panel" style="position:fixed;right:10px;bottom:10px;z-index:99999;pointer-events:auto;background:var(--background,#1a1a2e);padding:10px;border:1px solid #409EFF;border-radius:8px;max-width:280px;">
-		<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-			<strong style="color:#409EFF;">好友同步</strong>
-			<span class="eft-sync-user-area" style="font-size:12px;"></span>
-		</div>
-		<div class="eft-sync-team-area" style="font-size:12px;"></div>
-	</div>
-	<!-- ====== 同步面板结束 ====== -->
+<!-- [v3] React-managed sync panel mount point -->
+<div id="eft-react-root"></div>
+<script type="module" src="/src/main.tsx"></script>
 </body>
 	<!-- ====== 同步面板结束 ====== -->
 </html>

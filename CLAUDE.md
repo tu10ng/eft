@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev       # Start Vite dev server (port 5173)
+npm run dev       # Start Vite dev server (port 3456)
 npm run build     # TypeScript check + Vite production build to dist/
 npm run lint      # Run oxlint (TypeScript linter)
 npm run preview   # Preview production build locally
@@ -22,6 +22,14 @@ npm run preview   # Preview production build locally
 ## Project overview
 
 Escape from Tarkov (EFT) quest progress tracker. The app embeds a quest tree page from eftarkov.com (~745KB single HTML file) and adds a React overlay for Supabase-based cloud sync, team management, and teammate progress comparison.
+
+## Deployment
+
+Hosted on **GitHub Pages** at `https://tu10ng.github.io/eft/`. Automatic deployment via GitHub Actions on push to `master` (`.github/workflows/deploy.yml`).
+
+- **Why GitHub Pages instead of Vercel**: Vercel's `*.vercel.app` domains are blocked by the GFW in China. GitHub Pages' `*.github.io` domains are accessible.
+- **Vite `base`** is set to `/eft/` because the site is served from a subdirectory, not the apex domain.
+- Supabase backend is unaffected — the frontend connects directly to Supabase regardless of where it's hosted.
 
 ## Architecture: hybrid HTML + React overlay
 
@@ -61,9 +69,17 @@ V2 timestamped format (legacy boolean format is normalized at fetch time):
 
 `useToggleQuest` uses **optimistic updates** — the UI toggles immediately, with rollback on failure.
 
+## MCP servers (`.mcp.json`)
+
+| Server | Type | Purpose |
+|---|---|---|
+| `supabase` | HTTP | SQL queries, migrations, logs for Supabase project `ywzdjijjeqeyevhrudrf` |
+
+Additional MCP servers (Vercel, GitHub) can be added as needed for deployment or repo management tasks.
+
 ## Supabase backend
 
-Project ref: `ywzdjijjeqeyevhrudrf`. The Supabase MCP tools in `.mcp.json` can execute SQL, manage migrations, and check logs against this project.
+Project ref: `ywzdjijjeqeyevhrudrf`. Supabase credentials are hardcoded in `src/lib/supabase.ts` (anon key is public by design).
 
 ### Database tables (see `supabase/migrations/`)
 
@@ -121,3 +137,11 @@ Filter buttons (全部/仅好友完成/仅我完成/都没做/都完成) set `cu
 
 ### Error boundary for overlay resilience
 The React overlay is a separate root from the main page. If any overlay component crashes, it takes down the entire overlay. `ErrorBoundary` in `App.tsx` catches render errors and shows a fallback panel with a retry button, keeping the main quest tree page functional.
+
+### GitHub Pages subdirectory: `base: '/eft/'`
+Vite's `base` is set to `/eft/` so that all asset paths (JS bundles, CSS, images) are prefixed correctly for the GitHub Pages project site URL (`tu10ng.github.io/eft/`). Without this, assets would 404 because the browser resolves `/assets/...` relative to `tu10ng.github.io` instead of `tu10ng.github.io/eft/`.
+
+This only affects Vite-injected assets (the React bundle). Legacy scripts in the quest tree HTML use relative paths (`./js/...`) which resolve correctly regardless.
+
+### Vercel → GitHub Pages migration
+Originally deployed on Vercel. Switched to GitHub Pages because `*.vercel.app` domains are blocked by the GFW in China. The Vercel project (`tu10ngs-projects/eft`) and `vercel.json` still exist but are no longer the primary deployment target. GitHub Actions handles CI/CD now — push to master triggers `.github/workflows/deploy.yml`.

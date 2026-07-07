@@ -49,9 +49,8 @@ export function SyncPanel() {
   const handleLogout = useCallback(async () => {
     await logout()
     localStorage.removeItem('eft_session_email')
-    queryClient.clear()
     toast.success('已退出登录')
-  }, [logout, queryClient])
+  }, [logout])
 
   const handleCreateTeam = useCallback(async () => {
     if (!teamName.trim()) {
@@ -61,13 +60,12 @@ export function SyncPanel() {
     if (!user) return
     try {
       const { code } = await createTeam(teamName.trim(), user.id)
-      setTeamId(null) // Will be set by refetchTeamInfo
       await refetchTeamInfo()
       toast.success(`小队创建成功！邀请码: ${code}`)
     } catch (err: unknown) {
       toast.error(`创建失败: ${err instanceof Error ? err.message : '未知错误'}`)
     }
-  }, [teamName, user, setTeamId, refetchTeamInfo])
+  }, [teamName, user, refetchTeamInfo])
 
   const handleJoinTeam = useCallback(async () => {
     if (!inviteCode.trim()) {

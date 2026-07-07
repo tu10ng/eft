@@ -8,6 +8,8 @@ import { DualPill } from './DualPill'
 
 export function QuestPillBridge() {
   const portals = useRef<Map<string, HTMLElement>>(new Map())
+  // Track original buttons for cleanup — restore their display on unmount
+  const originals = useRef<Map<string, HTMLElement>>(new Map())
   const [, forceUpdate] = useState(0)
 
   useEffect(() => {
@@ -27,6 +29,7 @@ export function QuestPillBridge() {
       btn.parentNode?.insertBefore(container, btn)
 
       portals.current.set(questId, container)
+      originals.current.set(questId, btn)
       forceUpdate((n) => n + 1)
     }
 
@@ -62,6 +65,15 @@ export function QuestPillBridge() {
       clearTimeout(t2)
       clearTimeout(t3)
       observer.disconnect()
+
+      // Cleanup: remove created containers and restore original buttons
+      portals.current.forEach((container, questId) => {
+        container.remove()
+        const btn = originals.current.get(questId)
+        if (btn) btn.style.display = ''
+      })
+      portals.current.clear()
+      originals.current.clear()
     }
   }, [])
 

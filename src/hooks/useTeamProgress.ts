@@ -2,6 +2,7 @@
 // useTeamProgress — fetch teammate quest data
 // Also provides team CRUD helpers
 // ============================================
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useUIStore } from '../stores/uiStore'
@@ -15,7 +16,7 @@ export function useTeamInfo() {
   const user = useUIStore((s) => s.user)
   const setTeamId = useUIStore((s) => s.setTeamId)
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['teamInfo', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -26,11 +27,8 @@ export function useTeamInfo() {
 
       if (error) throw error
 
-      const teamId = data?.team_id ?? null
-      if (teamId) setTeamId(teamId)
-
       return {
-        teamId,
+        teamId: (data?.team_id as string) ?? null,
         teamName: (data?.teams as unknown as { name?: string })?.name ?? null,
         inviteCode: (data?.teams as unknown as { invite_code?: string })?.invite_code ?? null,
       }
@@ -39,6 +37,14 @@ export function useTeamInfo() {
     staleTime: 60_000,
     retry: 2,
   })
+
+  // Side effect: sync teamId to Zustand store — done in useEffect, NOT in queryFn
+  useEffect(() => {
+    const teamId = query.data?.teamId ?? null
+    setTeamId(teamId)
+  }, [query.data?.teamId, setTeamId])
+
+  return query
 }
 
 /**

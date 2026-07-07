@@ -3,7 +3,7 @@
 // Server state is managed by TanStack Query
 // ============================================
 import { create } from 'zustand'
-import type { EftUser, FilterMode, SyncStatus } from '../types'
+import type { EftUser, FilterMode, RealtimeConnectionStatus, SyncStatus } from '../types'
 
 interface UIState {
   // Auth
@@ -25,6 +25,10 @@ interface UIState {
   // Sync status (for indicator UI)
   syncStatus: SyncStatus
   setSyncStatus: (status: SyncStatus) => void
+
+  // Realtime connection status (shared across components)
+  realtimeStatus: RealtimeConnectionStatus
+  setRealtimeStatus: (status: RealtimeConnectionStatus) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -42,4 +46,7 @@ export const useUIStore = create<UIState>((set) => ({
 
   syncStatus: 'offline',
   setSyncStatus: (syncStatus) => set({ syncStatus }),
+
+  realtimeStatus: 'disconnected',
+  setRealtimeStatus: (realtimeStatus) => set({ realtimeStatus }),
 }))

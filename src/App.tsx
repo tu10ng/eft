@@ -6,13 +6,14 @@ import { Toaster } from 'react-hot-toast'
 import { SyncPanel } from './components/SyncPanel'
 import { QuestPillBridge } from './components/QuestPillBridge'
 import { TeamDashboard } from './components/TeamDashboard'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { useRealtime } from './hooks/useRealtime'
 
 export function App() {
   const { realtimeStatus } = useRealtime()
 
   return (
-    <>
+    <ErrorBoundary>
       <SyncPanel />
       <QuestPillBridge />
       <TeamDashboard realtimeStatus={realtimeStatus} />
@@ -26,6 +27,6 @@ export function App() {
           },
         }}
       />
-    </>
+    </ErrorBoundary>
   )
 }

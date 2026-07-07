@@ -90,3 +90,34 @@ Quest changes broadcast via `supabase_realtime` publication on `quest_progress`.
 - **Optimistic mutations with rollback**: `useToggleQuest` snapshots the previous query cache, applies the update immediately, and rolls back on error.
 - **Realtime + polling duality**: WebSocket subscription for live updates; when disconnected, falls back to `refetchInterval: 10_000` on `useTeamProgress`.
 - **No routing**: This is a single-page app with a modal overlay for the dashboard.
+
+## Architecture decisions & gotchas
+
+### queryFn must be pure
+TanStack Query's `queryFn` must be a **pure function** — no side effects like setting Zustand state. `useTeamInfo` previously called `setTeamId()` inside `queryFn`, which is wrong because:
+- React StrictMode double-invokes queryFn, causing duplicate side effects
+- Query retries would re-execute the side effect
+- Breaks the separation between data fetching and state management
+
+**Fix**: Use `useEffect` to sync `query.data.teamId` → Zustand `setTeamId`. The `useEffect` runs only when the query result actually changes, not on every retry/StrictMode invocation.
+
+### SyncStatus has two independent sources
+`useSyncStatus` (browser online/offline) and `useRealtime` (WebSocket connection) both write to the same `syncStatus` Zustand field. The coordination rule:
+- Browser offline → always `'offline'` (overrides everything)
+- Browser online + realtime connected → `'online'`
+- Browser online + realtime disconnected → stays `'offline'` (realtime sets it)
+- Not logged in → `'offline'`
+
+`useRealtime` now explicitly sets `syncStatus = 'offline'` on `CHANNEL_ERROR` / `TIMED_OUT` / `CLOSED`, and `useSyncStatus` only transitions to `'online'` when `realtimeStatus === 'connected'`.
+
+### QuestPillBridge cleanup
+When the component unmounts (e.g., hot reload in dev), created containers must be removed and original `.myButton` elements' `display: none` must be restored. Track both `portals` (containers) and `originals` (buttons) in refs, and clean up in the effect's return function.
+
+### Filter implementation
+Filter buttons (全部/仅好友完成/仅我完成/都没做/都完成) set `currentFilter` in Zustand. Each `DualPill` instance reads `currentFilter`, computes whether the quest matches via `matchesFilter()`, then walks up the DOM (`btn.closest('g')`) to find the quest card wrapper and toggle its `display` style. This keeps filter logic co-located with each pill rather than in a central controller.
+
+### TanStack Query: stable function references matter
+`useAuth` returns `login` and `logout` — these should be wrapped in `useCallback` so that components depending on them (e.g., `SyncPanel.handleLogin`) don't get new function references every render. Zustand selectors like `useUIStore((s) => s.setUser)` return stable references, so including them in `useCallback` deps is safe.
+
+### Error boundary for overlay resilience
+The React overlay is a separate root from the main page. If any overlay component crashes, it takes down the entire overlay. `ErrorBoundary` in `App.tsx` catches render errors and shows a fallback panel with a retry button, keeping the main quest tree page functional.

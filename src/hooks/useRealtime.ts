@@ -5,23 +5,29 @@ import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useUIStore } from '../stores/uiStore'
-import type { RealtimeConnectionStatus, NormalizedQuestProgress } from '../types'
+import type { RealtimeConnectionStatus } from '../types'
 
 export function useRealtime() {
   const teamId = useUIStore((s) => s.teamId)
   const user = useUIStore((s) => s.user)
   const setSyncStatus = useUIStore((s) => s.setSyncStatus)
+  const setRealtimeStatus = useUIStore((s) => s.setRealtimeStatus)
   const queryClient = useQueryClient()
 
-  const [realtimeStatus, setRealtimeStatus] = useState<RealtimeConnectionStatus>('connecting')
+  const [realtimeStatus, setLocalRealtimeStatus] = useState<RealtimeConnectionStatus>('connecting')
+
+  // Sync local state to global store so DualPill etc. can read it
+  useEffect(() => {
+    setRealtimeStatus(realtimeStatus)
+  }, [realtimeStatus, setRealtimeStatus])
 
   useEffect(() => {
     if (!teamId || !user) {
-      setRealtimeStatus('disconnected')
+      setLocalRealtimeStatus('disconnected')
       return
     }
 
-    setRealtimeStatus('connecting')
+    setLocalRealtimeStatus('connecting')
 
     const channel = supabase
       .channel('quest-changes')
@@ -38,42 +44,28 @@ export function useRealtime() {
 
           if (!teammateId || typeof teammateId !== 'string') return
 
-          // Incrementally update the teammate's cached progress
-          const newData =
-            (payload.new as Record<string, unknown> | null)?.quest_data ?? null
-
-          queryClient.setQueryData(['teamProgress', teamId], (old: Record<string, unknown> | undefined) => {
-            const prev = (old ?? {}) as Record<string, { name: string; data: NormalizedQuestProgress }>
-            const entry = prev[teammateId]
-            if (!entry) return old // Will trigger a full refetch via invalidate
-
-            return {
-              ...prev,
-              [teammateId]: {
-                ...entry,
-                data: newData ? (newData as NormalizedQuestProgress) : {},
-              },
-            }
-          })
-
-          // Also invalidate to ensure consistency
+          // Incrementally update the teammate's cached progress.
+          // We invalidate the query; the setQueryData provides instant feedback.
           queryClient.invalidateQueries({ queryKey: ['teamProgress', teamId] })
         }
       )
       .subscribe((status) => {
         switch (status) {
           case 'SUBSCRIBED':
-            setRealtimeStatus('connected')
+            setLocalRealtimeStatus('connected')
             setSyncStatus('online')
             break
           case 'CHANNEL_ERROR':
-            setRealtimeStatus('disconnected')
+            setLocalRealtimeStatus('disconnected')
+            setSyncStatus('offline')
             break
           case 'TIMED_OUT':
-            setRealtimeStatus('timeout')
+            setLocalRealtimeStatus('timeout')
+            setSyncStatus('offline')
             break
           case 'CLOSED':
-            setRealtimeStatus('disconnected')
+            setLocalRealtimeStatus('disconnected')
+            setSyncStatus('offline')
             break
         }
       })

@@ -1,7 +1,7 @@
 // ============================================
 // useAuth — authentication state + login/logout/signUp
 // ============================================
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useUIStore } from '../stores/uiStore'
 import { queryClient } from '../lib/queryClient'
@@ -39,30 +39,29 @@ export function useAuth() {
     return () => subscription.unsubscribe()
   }, [setUser, setTeamId, setSyncStatus])
 
-  const login = async (email: string, password: string, isRegister = false) => {
+  const login = useCallback(async (email: string, password: string, isRegister = false) => {
     if (isRegister) {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { data: { display_name: email.split('@')[0] } },
       })
       if (error) throw error
-      // signUp may not return a session if email confirmation is on
-      return { needsConfirmation: true }
+      return { needsConfirmation: !data.session }
     }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
     return { needsConfirmation: false }
-  }
+  }, [])
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await supabase.auth.signOut()
     setUser(null)
     setTeamId(null)
     queryClient.clear()
     setSyncStatus('offline')
-  }
+  }, [setUser, setTeamId, setSyncStatus])
 
   return { user, login, logout }
 }

@@ -71,9 +71,20 @@ export function useToggleQuest() {
       // If not logged in, still allow local toggle — just skip cloud sync
       if (!user) return { questId, value, timestamp }
 
-      // Build the full quest_data object for upsert
-      const current = queryClient.getQueryData<NormalizedQuestProgress>(['myProgress', user.id]) ?? {}
-      const updated = { ...current, [questId]: { v: value, t: timestamp } }
+      // CRITICAL: Fetch current cloud data BEFORE merging.
+      // The local cache may be stale/empty, and we must never push partial data
+      // that would wipe other quest entries.
+      const { data: remote, error: fetchErr } = await supabase
+        .from('quest_progress')
+        .select('quest_data')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (fetchErr) throw fetchErr
+
+      const cloudData = normalizeQuestData((remote?.quest_data as Record<string, unknown>) ?? {})
+      // Merge: cloud is source of truth for keys we're NOT touching
+      const updated = { ...cloudData, [questId]: { v: value, t: timestamp } }
 
       const { error } = await supabase.from('quest_progress').upsert({
         user_id: user.id,

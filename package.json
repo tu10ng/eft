@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "extract": "node scripts/extract-quest-data.mjs",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
@@ -15,6 +16,7 @@
     "@tanstack/query-sync-storage-persister": "^5.90.0",
     "@tanstack/react-query": "^5.90.0",
     "@tanstack/react-query-persist-client": "^5.90.0",
+    "@xyflow/react": "^12.11.2",
     "idb-keyval": "^6.2.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
@@ -27,6 +29,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "oxlint": "^1.71.0",
+    "playwright": "^1.61.1",
     "typescript": "~6.0.2",
     "vite": "^8.1.1"
   }

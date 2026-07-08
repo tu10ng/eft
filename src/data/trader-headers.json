@@ -1,0 +1,68 @@
+[
+  {
+    "id": "78",
+    "x": 5,
+    "y": -290,
+    "traderImg": "https://img.eftarkov.com/upFiles/images/rw/Prapor-1.webp"
+  },
+  {
+    "id": "78",
+    "x": 3400,
+    "y": -290,
+    "traderImg": "https://img.eftarkov.com/upFiles/images/rw/Therapist-1.webp"
+  },
+  {
+    "id": "76",
+    "x": 7400,
+    "y": -290,
+    "traderImg": "https://img.eftarkov.com/upFiles/images/rw/Fence-1.webp"
+  },
+  {
+    "id": "75",
+    "x": 11000,
+    "y": -290,
+    "traderImg": "https://img.eftarkov.com/upFiles/images/rw/Skier-1.webp"
+  },
+  {
+    "id": "74",
+    "x": 15000,
+    "y": -290,
+    "traderImg": "https://img.eftarkov.com/upFiles/images/rw/Peacekeeper-1.webp"
+  },
+  {
+    "id": "73",
+    "x": 19000,
+    "y": -290,
+    "traderImg": "https://img.eftarkov.com/upFiles/images/rw/Mechanic-1.webp"
+  },
+  {
+    "id": "72",
+    "x": 23600,
+    "y": -290,
+    "traderImg": "https://img.eftarkov.com/upFiles/images/rw/Ragman-1.webp"
+  },
+  {
+    "id": "71",
+    "x": 27400,
+    "y": -290,
+    "traderImg": "https://img.eftarkov.com/upFiles/images/rw/Jaeger-1.webp"
+  },
+  {
+    "id": "70",
+    "x": 34500,
+    "y": -290,
+    "traderImg": "https://img.eftarkov.com/upFiles/images/rw/Lightkeeper-1.webp"
+  },
+  {
+    "id": "231",
+    "x": 38000,
+    "y": -290,
+    "traderImg": "https://img.eftarkov.com/upFiles/images/rw/Ref-1.webp"
+  },
+  {
+    "id": "231",
+    "x": 42500,
+    "y": -290,
+    "traderImg": "https://img.eftarkov.com/upFiles/images/rw/BTR-1.webp"
+  }
+]

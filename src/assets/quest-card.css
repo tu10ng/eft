@@ -1,0 +1,243 @@
+/* ============================================
+ * EFT Quest Card Styles — extracted from web_205.css
+ * Scoped under .quests-map-container for 1:1 compatibility
+ * ============================================ */
+
+/* Card wrapper background */
+.quests-map-container .quests-map-card-background {
+  border-radius: 8px;
+}
+
+/* Highlight glow for Kappa/DSPT quests */
+.quests-map-container .quests-map-card-background.is-highlight {
+  box-shadow:
+    0 0 0 5px #ff3b3b,
+    0 0 10px rgba(255, 59, 59, 0.8),
+    0 0 28px rgba(255, 59, 59, 0.6),
+    0 0 48px rgba(255, 59, 59, 0.35);
+}
+
+/* Main card */
+.quests-map-container .quests-map-card {
+  background: gray;
+  border-radius: 6px;
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  min-height: 204px;
+  padding: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Trader-specific background colors */
+.quests-map-container .quests-map-card._prapor       { background-color: #5c613b; }
+.quests-map-container .quests-map-card._therapist    { background-color: #a7a377; }
+.quests-map-container .quests-map-card._mechanic     { background-color: #594739; }
+.quests-map-container .quests-map-card._skier        { background-color: #72839f; }
+.quests-map-container .quests-map-card._peacekeeper  { background-color: #2b4f6c; }
+.quests-map-container .quests-map-card._ragman       { background-color: #cbb888; }
+.quests-map-container .quests-map-card._fence        { background-color: #313538; }
+.quests-map-container .quests-map-card._jaeger       { background-color: #9e6c4d; }
+.quests-map-container .quests-map-card._lightkeeper  { background-color: #75aac9; }
+.quests-map-container .quests-map-card._ref          { background-color: #cac199; }
+
+/* Completed state — semi-transparent overlay */
+.quests-map-container .quests-map-card._completed._prapor       { background-color: #5c613b66; }
+.quests-map-container .quests-map-card._completed._therapist    { background-color: #a7a37766; }
+.quests-map-container .quests-map-card._completed._mechanic     { background-color: #59473966; }
+.quests-map-container .quests-map-card._completed._skier        { background-color: #72839f66; }
+.quests-map-container .quests-map-card._completed._peacekeeper  { background-color: #2b4f6c66; }
+.quests-map-container .quests-map-card._completed._ragman       { background-color: #cbb88866; }
+.quests-map-container .quests-map-card._completed._fence        { background-color: #31353866; }
+.quests-map-container .quests-map-card._completed._jaeger       { background-color: #9e6c4d66; }
+.quests-map-container .quests-map-card._completed._lightkeeper  { background-color: #75aac966; }
+
+/* Completed state — dim text */
+.quests-map-container .quests-map-card._completed .quests-map-card__link { color: #ffc16566; }
+.quests-map-container .quests-map-card._completed .quests-map-card__title,
+.quests-map-container .quests-map-card._completed .quests-map-card__text,
+.quests-map-container .quests-map-card._completed .quests-map-card__icons { color: #fff6; }
+
+/* Card header */
+.quests-map-container .quests-map-card__header {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  min-height: 30px;
+}
+
+/* Strategy guide link */
+.quests-map-container .quests-map-card__link {
+  color: #ffc165;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+/* Icons container */
+.quests-map-container .quests-map-card__icons {
+  column-gap: 8px;
+  display: flex;
+}
+
+/* Level requirement pill */
+.quests-map-container .quests-map-card__level-req {
+  color: #fff;
+  background: #222;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 5px 10px;
+}
+
+/* Kappa/DSPT/trader icon container */
+.quests-map-container .quests-map-card__kappa {
+  align-items: center;
+  background: #222;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  min-height: 30px;
+  padding: 3px 8px;
+}
+
+.quests-map-container .quests-map-card__kappa img {
+  height: 16px;
+  width: 16px;
+}
+
+/* Card title */
+.quests-map-container .quests-map-card__title {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* Card description */
+.quests-map-container .quests-map-card__text {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1em;
+  margin-bottom: 6px;
+}
+
+/* Trader header card */
+.quests-map-container .quests-map-trader-card {
+  margin-top: -20px;
+  width: 100%;
+}
+
+.quests-map-container .quests-map-trader-card__image {
+  width: 100%;
+}
+
+.quests-map-container .quests-map-trader-card__image > img {
+  display: block;
+  width: 100%;
+}
+
+/* ============================================
+ * EFT Dual-Pill progress bar (replaces .myButton)
+ * Sized to match original myButton proportions
+ * ============================================ */
+
+.quests-map-container .eft-dual-bar {
+  display: flex;
+  gap: 4px;
+  margin-top: auto;       /* push to bottom like myButton */
+}
+
+.quests-map-container .eft-pill {
+  flex: 1;
+  padding: 14px 8px;
+  border: none;
+  border-radius: 4px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  text-align: center;
+  transition: all 0.2s ease;
+  min-width: 0;
+}
+
+.quests-map-container .eft-pill:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.quests-map-container .eft-pill-me:hover:not(:disabled) {
+  filter: brightness(1.2);
+  transform: scale(1.03);
+}
+
+.quests-map-container .eft-done {
+  background: #4CAF50;
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
+}
+
+.quests-map-container .eft-undone {
+  background: #c0392b;
+}
+
+.quests-map-container .eft-unknown {
+  background: #555;
+  color: #999;
+}
+
+/* Card border effects for sync status */
+.eft-card-both-done {
+  box-shadow: 0 0 0 2px #4CAF50, 0 0 12px rgba(76, 175, 80, 0.4) !important;
+}
+
+.eft-card-me-only {
+  box-shadow: 0 0 0 2px #FFC107, 0 0 12px rgba(255, 193, 7, 0.4) !important;
+}
+
+.eft-card-friend-only {
+  box-shadow: 0 0 0 2px #2196F3, 0 0 12px rgba(33, 150, 243, 0.4) !important;
+}
+
+/* Filter bar (used by SyncPanel) */
+.eft-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  align-items: center;
+}
+
+.eft-filter-btn {
+  padding: 2px 7px;
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.eft-filter-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.eft-filter-active {
+  background: #409EFF !important;
+  color: #fff !important;
+  border-color: #409EFF !important;
+}
+
+/* React Flow node overflow — allow tooltips to escape */
+.react-flow__node {
+  overflow: visible !important;
+}

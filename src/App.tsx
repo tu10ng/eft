@@ -1,10 +1,10 @@
 // ============================================
 // App — root React component
-// Renders sync panel, pill bridge, dashboard
+// Renders quest tree flow, sync panel, dashboard
 // ============================================
 import { Toaster } from 'react-hot-toast'
 import { SyncPanel } from './components/SyncPanel'
-import { QuestPillBridge } from './components/QuestPillBridge'
+import { QuestTreeFlow } from './components/QuestTreeFlow'
 import { TeamDashboard } from './components/TeamDashboard'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { useRealtime } from './hooks/useRealtime'
@@ -14,8 +14,8 @@ export function App() {
 
   return (
     <ErrorBoundary>
+      <QuestTreeFlow />
       <SyncPanel />
-      <QuestPillBridge />
       <TeamDashboard realtimeStatus={realtimeStatus} />
       <Toaster
         position="top-right"

@@ -1,87 +1,43 @@
 // ============================================
 // DualPill — dual progress pill (me + friend) for a single quest
-// Rendered via React Portal into the SVG foreignObject area
+// Pure UI component — progress data comes from parent via props
 // ============================================
-import { useCallback, useEffect, useMemo } from 'react'
-import { useMyProgress, useToggleQuest } from '../hooks/useMyProgress'
-import { useTeamProgress } from '../hooks/useTeamProgress'
-import { useUIStore } from '../stores/uiStore'
-import type { CombinedQuestStatus, FilterMode } from '../types'
+import { useCallback } from 'react'
+import { useToggleQuest } from '../hooks/useMyProgress'
 
 interface DualPillProps {
   questId: string
+  meDone: boolean | null
+  friendDone: boolean | null
 }
 
-/** Determine if a quest matches the current filter */
-function matchesFilter(mode: FilterMode, status: CombinedQuestStatus): boolean {
-  switch (mode) {
-    case 'all':
-      return true
-    case 'friend-done':
-      return status.friend === true
-    case 'me-done':
-      return status.me === true
-    case 'neither':
-      return status.me === false && status.friend === false
-    case 'both':
-      return status.me === true && status.friend === true
-  }
-}
-
-export function DualPill({ questId }: DualPillProps) {
-  const { data: myProgress } = useMyProgress()
+export function DualPill({ questId, meDone, friendDone }: DualPillProps) {
   const { mutate: toggleQuest } = useToggleQuest()
-  const realtimeStatus = useUIStore((s) => s.realtimeStatus)
-  const currentFilter = useUIStore((s) => s.currentFilter)
-  const { data: teamProgress } = useTeamProgress(realtimeStatus)
-
-  const combined = useMemo((): CombinedQuestStatus => {
-    const me = myProgress?.[questId]?.v ?? null
-    const teammateIds = Object.keys(teamProgress ?? {})
-    let friend: boolean | null = null
-    if (teammateIds.length > 0) {
-      const val = teamProgress?.[teammateIds[0]]?.data?.[questId]?.v
-      friend = val === true ? true : val === false ? false : null
-    }
-    return { me, friend }
-  }, [myProgress, teamProgress, questId])
-
-  // Apply filter to the quest card wrapper in the original DOM
-  useEffect(() => {
-    const btn = document.getElementById(questId)
-    // Walk up from the button to find the quest card group (<g> element in SVG)
-    const card = btn?.closest('g')
-    if (!card) return
-
-    const visible = matchesFilter(currentFilter, combined)
-    ;(card as SVGElement).style.display = visible ? '' : 'none'
-  }, [questId, currentFilter, combined])
 
   const handleToggleMe = useCallback(() => {
-    const current = myProgress?.[questId]?.v ?? false
-    toggleQuest({ questId, value: !current, timestamp: Date.now() })
-  }, [questId, myProgress, toggleQuest])
+    toggleQuest({ questId, value: !meDone, timestamp: Date.now() })
+  }, [questId, meDone, toggleQuest])
 
-  const hasTeammate = Object.keys(teamProgress ?? {}).length > 0
+  const hasTeammate = friendDone !== null
 
   return (
     <div className="eft-dual-bar" data-quest-id={questId}>
       <button
-        className={`eft-pill eft-pill-me ${pillClass(combined.me)}`}
+        className={`eft-pill eft-pill-me ${pillClass(meDone)}`}
         data-player="me"
         title="点击切换我的进度"
         onClick={handleToggleMe}
       >
-        {pillLabel('我', combined.me)}
+        {pillLabel('我', meDone)}
       </button>
       <button
-        className={`eft-pill eft-pill-friend ${pillClass(combined.friend)}`}
+        className={`eft-pill eft-pill-friend ${pillClass(friendDone)}`}
         data-player="friend"
         disabled
-        title={combined.friend === true ? '好友已完成' : combined.friend === false ? '好友未完成' : '暂无好友数据'}
+        title={friendDone === true ? '好友已完成' : friendDone === false ? '好友未完成' : '暂无好友数据'}
         style={{ display: hasTeammate ? '' : 'none' }}
       >
-        {pillLabel('友', combined.friend)}
+        {pillLabel('友', friendDone)}
       </button>
     </div>
   )
